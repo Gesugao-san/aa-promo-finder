@@ -1,0 +1,26 @@
+{
+  "name": "aa-promo-finder",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">\r \t<h2 align=\"center\">\r \t\t<a href=\"https://github.com/Gesugao-san/aa-promo-finder\">ArcheAge promo finder</a>\r \t</h2>\r </p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gesugao-san/aa-promo-finder.git"
+  },
+  "keywords": [
+    "archeage",
+    "mail-ru"
+  ],
+  "author": "Gesugao-san",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Gesugao-san/aa-promo-finder/issues"
+  },
+  "homepage": "https://github.com/Gesugao-san/aa-promo-finder#readme",
+  "dependencies": {
+    "request": "^2.88.2"
+  }
+}
