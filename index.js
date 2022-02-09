@@ -2,7 +2,7 @@
 const request = require('request');
 const fs = require('fs');
 
-let obj, alph1, alph2, alph3, alph4, id = 0, random_item, uri, target2;
+let obj, alph1, alph2, alph3, alph4, id = 0, random_item, uri;
 var out = [];
 var path = './cache/result.json';
 
@@ -35,47 +35,41 @@ function generateArray() {
 
 function writeCache(path, data) {
 	if (!fs.existsSync(path)) {
-		console.log('File not found! Writing generated one...');
-		// https://stackoverflow.com/a/31777314/8175291
-		fs.writeFileSync(path, JSON.stringify(data, null, 4), { flag: 'w' }, function(error) { // 'wx' for "EEXIST"
-			if (error) {
-				console.log('Error occured while data saving: ', err);
-			} else {
-				console.log('Data saved.');
-			}
-		});
+		console.log('File not found!'); // Writing generated one...
 	}
+	// https://stackoverflow.com/a/31777314/8175291
+	fs.writeFileSync(path, JSON.stringify(data, null, 4), { flag: 'w' }, function(error) { // 'wx' for "EEXIST"
+		if (error) {
+			console.log('Error occured while data saving: ', err);
+		} else {
+			console.log('Data saved.');
+		}
+	});
 }
 
 console.clear();
 generateArray();
-writeCache(path, {out}, true);
+if (!fs.existsSync(path)) {
+	writeCache(path, {out}, true);
+}
+obj = JSON.parse(fs.readFileSync(path, 'utf8'))["out"];
 
 
-random_item = out[Math.floor(Math.random() * out.length)][0];
+/* random_item = out[Math.floor(Math.random() * out.length)][0]; */
 /* var uri = "http://aa.mail.ru/promo/" + random_item + "/"; */
-uri_ok = "aa81"; //"https://www.google.ru/";
+/* uri_ok = "aa81"; //"https://www.google.ru/";
 uri_fail = "aa00";
 if (0) random_item=uri_ok; if (1) random_item=uri_fail;
 uri = "https://archeage.ru/promo/" + random_item + "/index.html";
 
-obj = JSON.parse(fs.readFileSync(path, 'utf8'))["out"];
-target2 = indexOfArray2D(out, random_item); //(indexOfArray2D(out, random_item)) ? indexOfArray2D(out, random_item) : -1;
-
-console.log("target2:", out[target2]);
-out[target2][2] = '-';
-console.log("target2:", out[target2]);
-
 console.log([out[0]], ",");
 console.log(out.slice(1, 4), "...");
 console.log(out.slice(-3, out.length));
-console.log("Random target URL:", uri);
+console.log("Random target URL:", uri); */
 
-//lastGameachePath = path.basename('./output/' + parameters["appid"] + '.json');
-//const get_request_args = querystring.stringify(parameters);
 
-const req_options = {
-	uri: uri,
+var req_options = {
+	uri: '',
 	port: 80,
 	method: 'GET',
 	headers: {
@@ -85,24 +79,31 @@ const req_options = {
 	}
 };
 
-console.log('Data receiving in progress...');
-if (0) request(req_options, function(error, response, body) {
-	if (!error) {
-		if (response.statusCode == 200) {
-			console.log('200 OK — website and connection is up');
+for (var i = 1; i < out.length; i++) { // first is date
+	uri = "https://archeage.ru/promo/" + out[i][1] + "/index.html";
+	req_options.uri = uri;
+	console.log('Data receiving in progress...', req_options.uri);
+	if (1) request(req_options, function(error, response, body) {
+		if (!error) {
+			if (response.statusCode == 200) {
+				console.log('200 OK — website and connection is up');
+				out[indexOfArray2D(out, random_item)][2] = '+';
+			}
+			if (response.statusCode in Array.from(Array(300, 399).keys())) {
+				console.log('Redirect (status code):', response.statusCode);
+				out[indexOfArray2D(out, random_item)][2] = '-';
+				writeCache(path, {out}, true);
+			} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != uri ) { // https://stackoverflow.com/a/17362976/8175291
+				console.log('Redirect (request href) — there is no promo');
+				out[indexOfArray2D(out, random_item)][2] = '-';
+				writeCache(path, {out}, true);
+			} else if (response.statusCode != 200) {
+				console.log('Error:', response.statusCode);
+			}
+		} else {
+			console.error('Error occured while data receiving:', error);
+			console.log('Non-OK HTTP status code received:', response && response.statusCode);
 		}
-		if (response.statusCode in Array.from(Array(300, 399).keys())) {
-			console.log('Redirect (status code):', response.statusCode);
-		} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != uri ) { // https://stackoverflow.com/a/17362976/8175291
-			console.log('Redirect (website) — there is no promo');
-		} else if (response.statusCode != 200) {
-			console.log('Error:', response.statusCode);
-		}
-	} else {
-		console.error('Error occured while data receiving:', error);
-		console.log('Non-OK HTTP status code received:', response && response.statusCode);
-	}
-});
+	});
+}
 
-fs.rmSync(path);
-writeCache(path, {out}, true);
