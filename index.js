@@ -79,7 +79,7 @@ async function mainLoop() {
 		let targetIndex = indexOfArray2D(out, out[i][1]);
 		req_options.uri = uri;
 		console.log('Data receiving in progress...', req_options.uri);
-		await doRequest(req_options.uri, targetIndex);
+		let res = await doRequest(req_options.uri, targetIndex).resolve();
 		// console.log(res);
 		writeCache(path, {out}, true);
 	}
