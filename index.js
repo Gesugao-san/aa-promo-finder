@@ -2,7 +2,9 @@
 const request = require('request');
 const fs = require('fs');
 
-let obj, alph1, alph2, alph3, alph4, id = 0, out = [];
+let obj, alph1, alph2, alph3, alph4, id = 0, random_item, uri, target2;
+var out = [];
+var path = './cache/result.json';
 
 function indexOfArray2D(array, target) {
 	for (var i = 0; i < array.length; i++) {
@@ -13,48 +15,52 @@ function indexOfArray2D(array, target) {
 	return false;
 }
 
-console.clear();
-
-for(i1 = 9; ++i1 < 16;) {
-	alph1 = i1.toString(36).toLowerCase(); // a-z
-	for(i2 = 9; ++i2 < 16;) {
-		alph2 = i2.toString(36).toLowerCase(); // a-z
-		for(i3 = -1; ++i3 < 10;) {
-			alph3 = i3.toString(36); // 0-9
-			for(i4 = -1; ++i4 < 10;) {
-				alph4 = i4.toString(36); // 0-9
-				id++;
-				out.push([String(id).padStart(4, '0'), alph1 + alph2 + alph3 + alph4, "?"]); // aa00 - ff99
+function generateArray() {
+	for(i1 = 9; ++i1 < 16;) {
+		alph1 = i1.toString(36).toLowerCase(); // a-z
+		for(i2 = 9; ++i2 < 16;) {
+			alph2 = i2.toString(36).toLowerCase(); // a-z
+			for(i3 = -1; ++i3 < 10;) {
+				alph3 = i3.toString(36); // 0-9
+				for(i4 = -1; ++i4 < 10;) {
+					alph4 = i4.toString(36); // 0-9
+					id++; // '0001' - '3600'
+					out.push([String(id).padStart(4, '0'), alph1 + alph2 + alph3 + alph4, "?"]); // aa00 - ff99
+				}
 			}
 		}
 	}
+	out.unshift(new Date().toISOString());
 }
 
-out.unshift(new Date().toISOString());
-var path = './cache/result.json';
-
-if (!fs.existsSync(path)) {
-	console.log('File not found! Creating generated one...');
-	// https://stackoverflow.com/a/31777314/8175291
-	fs.writeFileSync(path, JSON.stringify({out}, null, 4), { flag: 'w' }, function(err, result) { // 'wx' for "EEXIST"
-		if (error) {
-			console.log('Error occured while data saving: ', err);
-		} else {
-			console.log('Data saved.');
-		}
-	});
+function writeCache(path, data) {
+	if (!fs.existsSync(path)) {
+		console.log('File not found! Writing generated one...');
+		// https://stackoverflow.com/a/31777314/8175291
+		fs.writeFileSync(path, JSON.stringify(data, null, 4), { flag: 'w' }, function(error) { // 'wx' for "EEXIST"
+			if (error) {
+				console.log('Error occured while data saving: ', err);
+			} else {
+				console.log('Data saved.');
+			}
+		});
+	}
 }
 
+console.clear();
+generateArray();
+writeCache(path, {out}, true);
 
-var random_item = out[Math.floor(Math.random() * out.length)][0];
+
+random_item = out[Math.floor(Math.random() * out.length)][0];
 /* var uri = "http://aa.mail.ru/promo/" + random_item + "/"; */
 uri_ok = "aa81"; //"https://www.google.ru/";
 uri_fail = "aa00";
 if (0) random_item=uri_ok; if (1) random_item=uri_fail;
-var uri = "https://archeage.ru/promo/" + random_item + "/index.html";
+uri = "https://archeage.ru/promo/" + random_item + "/index.html";
 
 obj = JSON.parse(fs.readFileSync(path, 'utf8'))["out"];
-var target2 = indexOfArray2D(out, random_item); //(indexOfArray2D(out, random_item)) ? indexOfArray2D(out, random_item) : -1;
+target2 = indexOfArray2D(out, random_item); //(indexOfArray2D(out, random_item)) ? indexOfArray2D(out, random_item) : -1;
 
 console.log("target2:", out[target2]);
 out[target2][2] = '-';
@@ -64,7 +70,6 @@ console.log([out[0]], ",");
 console.log(out.slice(1, 4), "...");
 console.log(out.slice(-3, out.length));
 console.log("Random target URL:", uri);
-if (1) return;
 
 //lastGameachePath = path.basename('./output/' + parameters["appid"] + '.json');
 //const get_request_args = querystring.stringify(parameters);
@@ -81,7 +86,7 @@ const req_options = {
 };
 
 console.log('Data receiving in progress...');
-request(req_options, function(error, response, body) {
+if (0) request(req_options, function(error, response, body) {
 	if (!error) {
 		if (response.statusCode == 200) {
 			console.log('200 OK — website and connection is up');
@@ -99,14 +104,5 @@ request(req_options, function(error, response, body) {
 	}
 });
 
-if (!fs.existsSync(path)) {
-	console.log('File not found! Creating generated one...');
-	// https://stackoverflow.com/a/31777314/8175291
-	fs.writeFileSync(path, JSON.stringify({out}, null, 4), { flag: 'w' }, function(err, result) { // 'wx' for "EEXIST"
-		if (error) {
-			console.log('Error occured while data saving: ', err);
-		} else {
-			console.log('Data saved.');
-		}
-	});
-}
+fs.rmSync(path);
+writeCache(path, {out}, true);
