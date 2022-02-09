@@ -3,6 +3,16 @@ const request = require('request');
 const fs = require('fs');
 
 let obj, alph1, alph2, alph3, alph4, id = 0, out = [];
+
+function indexOfArray2D(array, target) {
+	for (var i = 0; i < array.length; i++) {
+		if (array[i][1] == target) {
+			return i;
+		}
+	}
+	return false;
+}
+
 console.clear();
 
 for(i1 = 9; ++i1 < 16;) {
@@ -38,12 +48,17 @@ if (!fs.existsSync(path)) {
 
 var random_item = out[Math.floor(Math.random() * out.length)][0];
 /* var uri = "http://aa.mail.ru/promo/" + random_item + "/"; */
+uri_ok = "aa81"; //"https://www.google.ru/";
+uri_fail = "aa00";
+if (0) random_item=uri_ok; if (1) random_item=uri_fail;
 var uri = "https://archeage.ru/promo/" + random_item + "/index.html";
-uri_ok = "https://archeage.ru/promo/aa81/index.html"; //"https://www.google.ru/";
-uri_fail = "https://archeage.ru/promo/aa00/index.html"; //"https://www.google.ru/";
-if (0) uri=uri_ok; if (1) uri=uri_fail;
 
 obj = JSON.parse(fs.readFileSync(path, 'utf8'))["out"];
+var target2 = indexOfArray2D(out, random_item); //(indexOfArray2D(out, random_item)) ? indexOfArray2D(out, random_item) : -1;
+
+console.log("target2:", out[target2]);
+out[target2][2] = '-';
+console.log("target2:", out[target2]);
 
 console.log([out[0]], ",");
 console.log(out.slice(1, 4), "...");
@@ -83,3 +98,15 @@ request(req_options, function(error, response, body) {
 		console.log('Non-OK HTTP status code received:', response && response.statusCode);
 	}
 });
+
+if (!fs.existsSync(path)) {
+	console.log('File not found! Creating generated one...');
+	// https://stackoverflow.com/a/31777314/8175291
+	fs.writeFileSync(path, JSON.stringify({out}, null, 4), { flag: 'w' }, function(err, result) { // 'wx' for "EEXIST"
+		if (error) {
+			console.log('Error occured while data saving: ', err);
+		} else {
+			console.log('Data saved.');
+		}
+	});
+}
