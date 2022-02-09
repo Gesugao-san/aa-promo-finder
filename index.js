@@ -2,7 +2,7 @@
 const request = require('request');
 const fs = require('fs');
 
-let alph1, alph2, alph3, alph4, out = [];
+let obj, alph1, alph2, alph3, alph4, out = [];
 
 for(i1 = 9; ++i1 < 16;) {
 	alph1 = i1.toString(36).toLowerCase(); // a-z
@@ -18,14 +18,32 @@ for(i1 = 9; ++i1 < 16;) {
 	}
 }
 
-/* fs.writeFile('./cache/result.json', JSON.stringify(out, null, 4), function(err, result) {
-	if (err)
-		console.log('Error occured while data saving: ', err);
-	else
-		console.log('Data saved.');
-	const used = process.memoryUsage().heapUsed / 1024 / 1024; // https://geshan.com.np/blog/2021/10/nodejs-read-file-line-by-line/
-	console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
-}); */
+out.unshift(new Date().toISOString());
+
+if (fs.existsSync('./cache/result.json')) {
+	obj = JSON.parse(fs.readFileSync('./cache/result.json', 'utf8'));
+	console.log("obj: ", obj);
+} else {
+	console.log('File not found! Creating generated one...');
+	// https://stackoverflow.com/a/31777314/8175291
+	fs.writeFileSync('./cache/result.json', JSON.stringify({out}, null, 4), { flag: 'w' }, function(err, result) { // 'wx' for "EEXIST"
+		if (error) {
+			console.log('Error occured while data saving: ', err);
+		} else {
+			console.log('Data saved.');
+		}
+	});
+}
+
+/* try {
+} catch (error) {
+	if (error.code === 'ENOENT') {
+		console.log('File not found! Creating generated...');
+	} else {
+		throw error;
+	}
+} */
+
 
 var random_item = out[Math.floor(Math.random() * out.length)][0];
 /* var uri = "http://aa.mail.ru/promo/" + random_item + "/"; */
@@ -35,10 +53,10 @@ uri_fail = "https://archeage.ru/promo/ff99/index.html"; //"https://www.google.ru
 if (0) uri=uri_ok; if (0) uri=uri_fail;
 
 console.clear();
-console.log(out.slice(0, 3), "...");
+console.log([out[0]], ", ...");
+console.log(out.slice(1, 4), "...");
 console.log(out.slice(-3, out.length));
 console.log("Random target URL:", uri);
-console.log("Date.now();:", Date.now());
 if (1) return;
 
 //lastGameachePath = path.basename('./output/' + parameters["appid"] + '.json');
