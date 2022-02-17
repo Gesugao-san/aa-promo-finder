@@ -49,18 +49,20 @@ function writeCache(path, data) {
 
 function doRequest(url, targetIndex) {
 	return new Promise((resolve, reject) => {
-		request(req_options, function(error, response, body) {
+		request(req_options, function(error, response, body, resolve, reject) {
 			if (!error) {
 				if (response.statusCode == 200) {
 					console.log('200 OK — website and connection is up');
-					out[targetIndex][2] = '+';
+					out[targetIndex][2] = '~';
 				}
 				if (response.statusCode in Array.from(Array(300, 399).keys())) {
 					console.log('Redirect (status code):', response.statusCode);
 					out[targetIndex][2] = '-';
+					resolve(url); // https://stackoverflow.com/a/48839845/8175291
 				} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != uri ) { // https://stackoverflow.com/a/17362976/8175291
 					console.log('Redirect (request href) — there is no promo');
 					out[targetIndex][2] = '-';
+					resolve(url); // https://stackoverflow.com/a/48839845/8175291
 				} else if (response.statusCode != 200) {
 					console.log('Error:', response.statusCode);
 				}
@@ -74,12 +76,16 @@ function doRequest(url, targetIndex) {
 
 async function mainLoop() {
 	console.log("out.length", out.length);
-	for (var i = 1; i < out.length; i++) { // first is date
+	for (var i = 1; i < out.length-3580; i++) { // first entry is date
 		uri = "https://archeage.ru/promo/" + out[i][1] + "/index.html";
 		let targetIndex = indexOfArray2D(out, out[i][1]);
 		req_options.uri = uri;
 		console.log('Data receiving in progress...', req_options.uri);
-		let res = await doRequest(req_options.uri, targetIndex).resolve();
+		const res = await doRequest(req_options.uri, targetIndex).then(function(val) {
+			console.log(val);
+		}).catch(function(err) {
+			console.err(err);
+		});
 		// console.log(res);
 		writeCache(path, {out}, true);
 	}
