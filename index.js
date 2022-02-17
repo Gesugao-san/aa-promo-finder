@@ -2,9 +2,10 @@
 const request = require('request');
 const fs = require('fs');
 
-let obj, alph1, alph2, alph3, alph4, id = 0, random_item, uri;
-var out = [];
+let obj, alph1, alph2, alph3, alph4, id = 0, random_item;
+var out = [], RedirectCodes = [];
 var path = './cache/result.json';
+var template = [ "https://archeage.ru/promo/", "/index.html"];
 
 function indexOfArray2D(array, target) {
 	for (var i = 0; i < array.length; i++) {
@@ -31,6 +32,10 @@ function generateArray() {
 		}
 	}
 	out.unshift(new Date().toISOString());
+	for (var i = 300; i <= 399; i++) {
+		RedirectCodes.push(i);
+	}
+	//console.log("RedirectCodes:", RedirectCodes[0], '-', RedirectCodes[RedirectCodes.length-1]);
 }
 
 function writeCache(path, data) {
@@ -47,46 +52,45 @@ function writeCache(path, data) {
 	});
 }
 
-function doRequest(url, targetIndex) {
+function doRequest(targetIndex) {
 	return new Promise((resolve, reject) => {
-		request(req_options, function(error, response, body, resolve, reject) {
-			if (!error) {
-				if (response.statusCode == 200) {
-					console.log('200 OK — website and connection is up');
-					out[targetIndex][2] = '~';
-				}
-				if (response.statusCode in Array.from(Array(300, 399).keys())) {
-					console.log('Redirect (status code):', response.statusCode);
-					out[targetIndex][2] = '-';
-					resolve(url); // https://stackoverflow.com/a/48839845/8175291
-				} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != uri ) { // https://stackoverflow.com/a/17362976/8175291
-					console.log('Redirect (request href) — there is no promo');
-					out[targetIndex][2] = '-';
-					resolve(url); // https://stackoverflow.com/a/48839845/8175291
-				} else if (response.statusCode != 200) {
-					console.log('Error:', response.statusCode);
-				}
-			} else {
-				console.error('Error occured while data receiving:', error);
-				console.log('Non-OK HTTP status code received:', response && response.statusCode);
+		// request('https://bitskins.com/api/v1/get_account_balance/?api_key='+api+'&code='+code, function (error, response, body) {
+		request(req_options, function (error, response, body) {
+			// in addition to parsing the value, deal with possible errors
+			if (response.statusCode == 200) {
+				process.stdout.write('200 OK — ');
+				//out[targetIndex][2] = '~';
 			}
+			if (response.statusCode in RedirectCodes) { // Array.from(Array(300, 399).keys())
+				//console.log('Redirect (status code):', response.statusCode);
+				//out[targetIndex][2] = '-';
+				resolve('Redirect (status code):', response.statusCode); // https://stackoverflow.com/a/48839845/8175291
+			} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != req_options.uri ) { // https://stackoverflow.com/a/17362976/8175291
+				//console.log('Redirect (request href) — there is no promo');
+				//out[targetIndex][2] = '-';
+				resolve("Redirect (request href), there is no promo"); // https://stackoverflow.com/a/48839845/8175291
+			} else if (response.statusCode != 200) {
+				console.log('Error:', response.statusCode);
+			}
+			if (error)
+				return reject(error);
 		});
 	});
 }
 
 async function mainLoop() {
-	console.log("out.length", out.length);
+	console.log("Template:", template[0] + "[aa00-ff99]" + template[1]);
+	console.log("Total promo to check:", out.length);
 	for (var i = 1; i < out.length-3580; i++) { // first entry is date
-		uri = "https://archeage.ru/promo/" + out[i][1] + "/index.html";
+		req_options.uri = template[0] + out[i][1] + template[1];
 		let targetIndex = indexOfArray2D(out, out[i][1]);
-		req_options.uri = uri;
-		console.log('Data receiving in progress...', req_options.uri);
-		const res = await doRequest(req_options.uri, targetIndex).then(function(val) {
+		//console.log('Data receiving in progress...', req_options.uri);
+		process.stdout.write('Target [' + ('000' + (i + 1)).slice(-4)  + '\\' + out.length + ']: ' + out[i][1] + ' — ');
+		await doRequest(targetIndex).then(function(val) {
 			console.log(val);
 		}).catch(function(err) {
-			console.err(err);
+			console.error(err);
 		});
-		// console.log(res);
 		writeCache(path, {out}, true);
 	}
 }
