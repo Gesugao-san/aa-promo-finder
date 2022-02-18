@@ -2,7 +2,6 @@
 const request = require('request');
 const fs = require('fs');
 
-let obj, alph1, alph2, alph3, alph4; //, id = 0;
 var out = [], RedirectCodes = [];
 var path = './cache/result.json';
 var template = [ "https://archeage.ru/promo/", "/index.html"];
@@ -18,6 +17,7 @@ function indexOfArray2D(array, target) {
 
 // populate
 function generateArray() {
+	let alph1, alph2, alph3, alph4;
 	for(i1 = 9; ++i1 < 16;) {
 		alph1 = i1.toString(36).toLowerCase(); // a-z
 		for(i2 = 9; ++i2 < 16;) {
@@ -69,11 +69,11 @@ function doRequest(targetIndex) {
 			if (response.statusCode in RedirectCodes) { // Array.from(Array(300, 399).keys())
 				//console.log('Redirect (status code):', response.statusCode);
 				out[targetIndex][1] = '-';
-				resolve('Redirect (status code):', response.statusCode); // https://stackoverflow.com/a/48839845/8175291
+				resolve('redirect (status code):', response.statusCode); // https://stackoverflow.com/a/48839845/8175291
 			} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != req_options.uri ) { // https://stackoverflow.com/a/17362976/8175291
 				//console.log('Redirect (request href) — there is no promo');
 				out[targetIndex][1] = '-';
-				resolve("Redirect (request href), there is no promo"); // https://stackoverflow.com/a/48839845/8175291
+				resolve("redirect (request href), there is no promo"); // https://stackoverflow.com/a/48839845/8175291
 			} else if (response.statusCode != 200) {
 				console.log('Error:', response.statusCode);
 			}
@@ -91,22 +91,22 @@ async function mainLoop() {
 		writeCache(path, {out}, true);
 	} */
 	try {
-		obj = JSON.parse(fs.readFileSync(path, 'utf8'));
+		out = JSON.parse(fs.readFileSync(path, 'utf8'));
 	} catch (error) {
 		console.error("Error on read cache file:\n", error);
 	}
 	var out_length = out.length - 3595;
-	var state;
-	obj.shift();
-	console.log("obj:", obj);
-	console.log("Template:", template[0] + "[aa00-ff99]" + template[1]);
+	console.log("Cache file loaded, last update time:", out[0]);
+	out.shift();
+	//console.log("out:", out[0]);
+	console.log("Template URL:", template[0] + "__DATA__" + template[1] + ", Data: [aa00-ff99]");
 	console.log("Total promo to check:", out_length);
 	for (var i = 1; i < out_length; i++) {
-		req_options.uri = template[0] + out[i][1] + template[1];
 		let targetIndex = indexOfArray2D(out, out[i][1]);
+		let state = out[targetIndex][1];
+		req_options.uri = template[0] + out[i][1] + template[1];
 		//console.log('Data receiving in progress...', req_options.uri);
-		process.stdout.write('Target [' + ('000' + (i)).slice(-4)  + '\\' + out_length + ']: \"' + out[i][0] + '\" — ');
-		var state = out[targetIndex][1];
+		process.stdout.write('Target [' + ('000' + (i)).slice(-out_length)  + '\\' + out_length + ']: ' + out[i][0] + ' — ');
 		if (state == "?") { //in ["?", "~"]
 			await doRequest(targetIndex).then(function(val) {
 				console.log(val);
@@ -114,7 +114,7 @@ async function mainLoop() {
 				console.error(err);
 			});
 		} else {
-			console.log("Skipping, was resolved:", state);
+			console.log("skipping due to already resolved: \"" + state + "\"");
 		}
 		writeCache(path, out, true);
 	}
