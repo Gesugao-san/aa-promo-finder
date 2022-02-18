@@ -18,6 +18,16 @@ function indexOfArray2D(array, target) {
 // populate
 function generateArray() {
 	let alph1, alph2, alph3, alph4;
+	/*
+		Possible templates:
+		With possible cycle rules:
+		https://archeage.ru/promo/ff99/index.html - https://archeage.ru/promo/ff99/index.html - (???) https://archeage.ru/promo/zz99/index.html
+		(???) http://aa.mail.ru/promo/playaa/ - http://aa.mail.ru/promo/playff/ - http://aa.mail.ru/promo/playzz/
+		* (???) - To explore or unknown data mark.
+		Exceptions:
+		http://aa.mail.ru/subscribe, http://aa.mail.ru/promo/advent/.
+		//
+	*/
 	for(i1 = 9; ++i1 < 16;) {
 		alph1 = i1.toString(36).toLowerCase(); // a-z
 		for(i2 = 9; ++i2 < 16;) {
