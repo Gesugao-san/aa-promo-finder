@@ -2,7 +2,7 @@
 const request = require('request');
 const fs = require('fs');
 
-let obj, alph1, alph2, alph3, alph4, id = 0, random_item;
+let obj, alph1, alph2, alph3, alph4; //, id = 0;
 var out = [], RedirectCodes = [];
 var path = './cache/result.json';
 var template = [ "https://archeage.ru/promo/", "/index.html"];
@@ -16,6 +16,7 @@ function indexOfArray2D(array, target) {
 	return false;
 }
 
+// populate
 function generateArray() {
 	for(i1 = 9; ++i1 < 16;) {
 		alph1 = i1.toString(36).toLowerCase(); // a-z
@@ -25,8 +26,9 @@ function generateArray() {
 				alph3 = i3.toString(36); // 0-9
 				for(i4 = -1; ++i4 < 10;) {
 					alph4 = i4.toString(36); // 0-9
-					id++; // '0001' - '3600'
-					out.push([String(id).padStart(4, '0'), alph1 + alph2 + alph3 + alph4, "?"]); // aa00 - ff99
+					//id++; // '0001' - '3600'
+					//out.push([String(id).padStart(4, '0'), alph1 + alph2 + alph3 + alph4, "?"]); // aa00 - ff99
+					out.push([alph1 + alph2 + alph3 + alph4, "?"]); // aa00 - ff99
 				}
 			}
 		}
@@ -40,7 +42,10 @@ function generateArray() {
 
 function writeCache(path, data) {
 	if (!fs.existsSync(path)) {
-		console.log('File not found!'); // Writing generated one...
+		console.log('File not found! Rewriting...');
+	}
+	if (Array.isArray(data[0])) {
+		data.unshift(new Date().toISOString());
 	}
 	// https://stackoverflow.com/a/31777314/8175291
 	fs.writeFileSync(path, JSON.stringify(data, null, 4), { flag: 'w' }, function(error) { // 'wx' for "EEXIST"
@@ -59,15 +64,15 @@ function doRequest(targetIndex) {
 			// in addition to parsing the value, deal with possible errors
 			if (response.statusCode == 200) {
 				process.stdout.write('200 OK — ');
-				//out[targetIndex][2] = '~';
+				out[targetIndex][1] = '~';
 			}
 			if (response.statusCode in RedirectCodes) { // Array.from(Array(300, 399).keys())
 				//console.log('Redirect (status code):', response.statusCode);
-				//out[targetIndex][2] = '-';
+				out[targetIndex][1] = '-';
 				resolve('Redirect (status code):', response.statusCode); // https://stackoverflow.com/a/48839845/8175291
 			} else if (response.request.uri.href == "https://archeage.ru/" || response.request.uri.href != req_options.uri ) { // https://stackoverflow.com/a/17362976/8175291
 				//console.log('Redirect (request href) — there is no promo');
-				//out[targetIndex][2] = '-';
+				out[targetIndex][1] = '-';
 				resolve("Redirect (request href), there is no promo"); // https://stackoverflow.com/a/48839845/8175291
 			} else if (response.statusCode != 200) {
 				console.log('Error:', response.statusCode);
@@ -79,28 +84,41 @@ function doRequest(targetIndex) {
 }
 
 async function mainLoop() {
+	console.clear();
+	generateArray();
+	/* if (!fs.existsSync(path)) { // ALWAYS REWRITES FILE, OK
+		console.log('File not found! Writing generated one...');
+		writeCache(path, {out}, true);
+	} */
+	try {
+		obj = JSON.parse(fs.readFileSync(path, 'utf8'));
+	} catch (error) {
+		console.error("Error on read cache file:\n", error);
+	}
+	var out_length = out.length - 3595;
+	var state;
+	obj.shift();
+	console.log("obj:", obj);
 	console.log("Template:", template[0] + "[aa00-ff99]" + template[1]);
-	console.log("Total promo to check:", out.length);
-	for (var i = 1; i < out.length-3580; i++) { // first entry is date
+	console.log("Total promo to check:", out_length);
+	for (var i = 1; i < out_length; i++) {
 		req_options.uri = template[0] + out[i][1] + template[1];
 		let targetIndex = indexOfArray2D(out, out[i][1]);
 		//console.log('Data receiving in progress...', req_options.uri);
-		process.stdout.write('Target [' + ('000' + (i + 1)).slice(-4)  + '\\' + out.length + ']: ' + out[i][1] + ' — ');
-		await doRequest(targetIndex).then(function(val) {
-			console.log(val);
-		}).catch(function(err) {
-			console.error(err);
-		});
-		writeCache(path, {out}, true);
+		process.stdout.write('Target [' + ('000' + (i)).slice(-4)  + '\\' + out_length + ']: \"' + out[i][0] + '\" — ');
+		var state = out[targetIndex][1];
+		if (state == "?") { //in ["?", "~"]
+			await doRequest(targetIndex).then(function(val) {
+				console.log(val);
+			}).catch(function(err) {
+				console.error(err);
+			});
+		} else {
+			console.log("Skipping, was resolved:", state);
+		}
+		writeCache(path, out, true);
 	}
 }
-
-console.clear();
-generateArray();
-if (!fs.existsSync(path)) {
-	writeCache(path, {out}, true);
-}
-obj = JSON.parse(fs.readFileSync(path, 'utf8'))["out"];
 
 
 /* random_item = out[Math.floor(Math.random() * out.length)][0]; */
