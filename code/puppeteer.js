@@ -8,9 +8,9 @@ console.clear();
 (async () => {
 	const cookies_in = [{
 		'name': 'PHPSESSID',
-		'value': 'ffdli8biuagb4mth27egei7p76', // 'secret' from https://aa.mail.ru/dynamic/auth/
+		'value': 'secret', // 'secret' from https://aa.mail.ru/dynamic/auth/
 		/* 'domain': '.mail.ru',
-		'path': '/',
+		'path1': '/',
 		'expires': -1, // '2023-01-01T00:00:01.123Z'
 		'session': true,
 		'size': 107,
@@ -23,7 +23,8 @@ console.clear();
 		'sourcePort': 443 */
 	}];
 	const browser = await puppeteer.launch();
-	const path = 'https://aa.mail.ru/dynamic/auth/'; // a=checkuser // 'https://www.example.com/path/'
+	const path1 = 'https://aa.mail.ru/dynamic/auth/'; // 'https://www.example.com/path1/'
+	const path2 = 'https://aa.mail.ru/dynamic/auth/?a=checkuser';
 	const page = await browser.newPage();
 	await page.setViewport({
 		width: 300, //640,
@@ -34,11 +35,11 @@ console.clear();
 	console.log("Hi!");
 
 	process.stdout.write("goto (1)... ");
-	await page.goto(path).then(() => {
+	await page.goto(path1).then(() => {
 		console.log("Ok");
 	}).catch((e) => {
 		console.error("Error:\n", e);
-		await browser.close();
+		browser.close();
 		process.exit(1);
 	});;
 
@@ -47,25 +48,43 @@ console.clear();
 		console.log("Ok");
 	}).catch((e) => {
 		console.error("Error:\n", e);
-		await browser.close();
+		browser.close();
 		process.exit(1);
 	});;
 
 	process.stdout.write("goto (2)... ");
-	await page.goto(path).then(() => {
+	await page.goto(path1).then(() => {
 		console.log("Ok");
 	}).catch((e) => {
 		console.error("Error:\n", e);
-		await browser.close();
+		browser.close();
 		process.exit(1);
 	});;
 
-	process.stdout.write("screenshot... ");
-	await page.screenshot({ path: './cache/aa_auth_result.png' }).then(() => {
+	process.stdout.write("screenshot (1)... ");
+	await page.screenshot({ path: './cache/aa_auth_result_1.png' }).then(() => {
 		console.log("Ok");
 	}).catch((e) => {
 		console.error("Error:\n", e);
-		await browser.close();
+		browser.close();
+		process.exit(1); // reject
+	});
+
+	process.stdout.write("goto (3)... ");
+	await page.goto(path2).then(() => {
+		console.log("Ok");
+	}).catch((e) => {
+		console.error("Error:\n", e);
+		browser.close();
+		process.exit(1);
+	});;
+
+	process.stdout.write("screenshot (2)... ");
+	await page.screenshot({ path: './cache/aa_auth_result_2.png' }).then(() => {
+		console.log("Ok");
+	}).catch((e) => {
+		console.error("Error:\n", e);
+		browser.close();
 		process.exit(1); // reject
 	});
 
