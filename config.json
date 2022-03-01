@@ -1,0 +1,33 @@
+{
+	"secrets": {
+		"name": "PHPSESSID",
+		"value": "secret"
+	},
+	"options": {
+		"rescan": 0,
+		"verbose": 0,
+		"recreate_data_file": 0,
+		"kill_cookie_on_exit": 0
+	},
+	"paths": {
+		"config": "./config.json",
+		"data": "./cache/data.json"
+	},
+	"urls": {
+		"aa": {
+			"full": "https://archeage.ru/*/index.html",
+			"short": "http://aa.mail.ru/*"
+		},
+		"cart": "cart"
+	},
+	"patterns": {
+		"numerical": [
+			"promo/aa*"
+		],
+		"strict": [
+			"promo/aa2022",
+			"promo/playaa",
+			"subscribe"
+		]
+	}
+}

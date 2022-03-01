@@ -1,67 +1,36 @@
 
 const fs = require('fs');
+var populateData = require('./module/populateData');
+const cfg = require('./config.json');
+require('./module/writeDataFile');
+require('./module/killCookie');
 
-var verbose = 1, rescan = 0;
-var path = './cache/result.json';
-var template = [ "https://archeage.ru/promo/", "/index.html"];
 
-const cfg = {
-	"secrets": {
-		"PHPSESSID": '0',
-	},
-	"options": {
-		"verbose": 0,
-		"rescan": 0,
-	},
-	"paths": {
-		"data": './cache/data.json',
-	},
-	"urls": {
-		"aa": {
-			"full": 'https://archeage.ru/',
-			"short": 'http://aa.mail.ru/',
-		},
-	},
-	"patterns": {
-		"promo": [
-			"aa*",
-		],
-		"no promo": [],
-		"exceptions": {
-			"promo": [
-				"advent",
-				"playaa",
-			],
-			"no promo": [
-				"subscribe",
-			]
-		}
-	}
-}
+console.clear();
+(async () => {
+	console.log("Hi!");
 
-function writeCache(path, data) {
-	let _flag;
-	if (!fs.existsSync(path)) {
-		console.log('File not found! Rewriting...');
-		_flag = 'w';
+
+	if ((!fs.existsSync(cfg.paths.data)) || (cfg.options.recreate_data_file)) {
+		process.stdout.write('Data file not found or forced to recrate, redeploying... ');
 	} else {
-		_flag = 'wx'; // 'wx' for "EEXIST"
+		process.stdout.write('Data file found... ');
 	}
-	if (!data[0].hasOwnProperty('time')) {
-		data.unshift(JSON.parse('{"time":"' + new Date().toISOString() + '"}'));
+	try {
+		writeDataFile(cfg.paths.data, populateData(), cfg.options.recreate_data_file ? 'w' : 'wx');
+	} catch (e) {
+		if ((e.code !== 'EEXIST') && (!cfg.options.recreate_data_file)) throw e;
 	}
-	/* let dataToWrite = [];
-	for (var i = 1; i < data.length; i++) {
-		dataToWrite.push(JSON.stringify(data.id, data.state));
-		console.log("dataToWrite:", dataToWrite[0]);
-		break;
-	} */
-	// https://stackoverflow.com/a/31777314/8175291
-	fs.writeFileSync(path, JSON.stringify(data, null, 4), { flag: _flag }, function(error) {
-		if (error) {
-			console.log('Error occured while data saving: ', err);
-		} else {
-			console.log('Data saved.');
-		}
-	});
-}
+	console.log('Ok');
+	const data = require(cfg.paths.data);
+
+	if ((cfg.options.kill_cookie_on_exit) && (cfg.secrets.value != "secret")) cfg.secrets[0].value = "secret";
+	writeDataFile(cfg.paths.config, cfg, 'w'); // cfg.options.recreate_data_file ? 'w' : 'wx');
+
+	data.data.auto.push("test");
+	console.log("2:\n", data);
+
+	//killCookie("https://archeage.ru/dynamic/auth/?plogout=1", [cfg.secrets]);
+
+	console.log("Bye!");
+})();

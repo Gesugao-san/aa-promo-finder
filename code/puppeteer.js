@@ -1,4 +1,6 @@
 
+// node ".\code\puppeteer.js"
+
 // https://github.com/bertrandom/chrome-cookies-secure
 // const chrome = require('chrome-cookies-secure'); - req. VS 2015
 const puppeteer = require('puppeteer');
@@ -45,12 +47,20 @@ console.clear();
 
 	process.stdout.write("setCookie... ");
 	await page.setCookie(...cookies_in).then(() => {
-		console.log("Ok");
+		console.log("Ok\n");
 	}).catch((e) => {
 		console.error("Error:\n", e);
 		browser.close();
 		process.exit(1);
 	});;
+	//console.log("page: " + page.json());
+
+	page.on('response', async (response) => {
+		//if (response.url() == "https://capuk.org/ajax_search/capmoneycourses"){
+		console.log('XHR response received');
+		console.log(await response.json());
+		//}
+	});
 
 	process.stdout.write("goto (2)... ");
 	await page.goto(path1).then(() => {
@@ -87,6 +97,24 @@ console.clear();
 		browser.close();
 		process.exit(1); // reject
 	});
+	process.stdout.write("goto (4)... ");
+	await page.goto('https://archeage.ru/').then(() => {
+		console.log("Ok");
+	}).catch((e) => {
+		console.error("Error:\n", e);
+		browser.close();
+		process.exit(1);
+	});;
+
+	process.stdout.write("title... ");
+	var title = await page.title().then(() => {
+		console.log("Ok");
+	}).catch((e) => {
+		console.error("Error:\n", e);
+		browser.close();
+		process.exit(1); // reject
+	});
+	console.log("title:", toString(title));
 
 	console.log("Bye!");
 	await browser.close();
