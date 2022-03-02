@@ -3,7 +3,7 @@ const find = require('find-process');
 var name = 'chrome.exe', process_running = false, process_debug = false;
 
 async function mainLoop() {
-	//console.clear();
+	console.clear();
 	console.log("Hi");
 	await find('name', name, true)
 		.then((list) => {
